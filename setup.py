@@ -1,7 +1,7 @@
 
 from setuptools import find_packages, setup
 
-setup(name="tex-out",
+setup(name="texout",
       version="0.1.0",
       description="A module for outputting to text files.",
       author="Alex Kerr",
