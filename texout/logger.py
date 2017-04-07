@@ -48,13 +48,9 @@ class TexLogger(Logger):
             sub (int):
                 The depth of the section.  Defaults to 0."""
         
-        self.write('\\')
-        print('{0}section{{{1}}}'.format('sub'*sub, title))
-        self.write('{0}section{{{1}}}'.format('sub'*sub, title))
-#        self.write_line('\{{0}}section{{1}}'.format('sub'*sub, title))
-        self.write('\n\n')
+        self.write_line('\{0}section{{{1}}}\n'.format('sub'*sub, title))
         
-    def figure(self, image, caption):
+    def figure(self, image, caption, width=3.):
         """Add figure to the tex file.
         
         Parameters:
@@ -62,12 +58,17 @@ class TexLogger(Logger):
             image (str):
                 Location of file to be included in tex.
             caption (str):
-                Figure caption."""
+                Figure caption.
+                
+        Keywords:
+        
+            width (float):
+                Width in inches of the figure."""
         
         self.write('\n')
         self.write_line(r'\begin{figure}[H]')
         self.write_line(r'\centering')
-        self.write_line(r'\includegraphics[width=3.in]{' + '{}'.format(image) + '}')
+        self.write_line(r'\includegraphics[width={0}in]{{{1}}}'.format(width, image))
         self.write_line(r'\caption{' + '{}'.format(caption) + '}')
         self.write_line(r'\end{figure}')
         
