@@ -1,13 +1,25 @@
 
+import os
+import time
 
 class Logger():
     """Basic object that outputs text to files."""
     
-    def __init__(self, filename):
+    def __init__(self, directory, filename=None):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        if filename is None:
+            filename = time.strftime('%m-%d--%H-%M-%S', time.localtime()) + '.tex'
+        if directory.endswith('/'):
+            buffer = ""
+        else:
+            buffer = "/"
         self.filename = filename
+        self.directory = directory + buffer
+        self.textfilename = self.directory + filename
         
     def write(self, msg, mode='a'):
-        with open(self.filename, mode) as f:
+        with open(self.textfilename, mode) as f:
             f.write(msg)
     
     def write_line(self, msg):
@@ -17,8 +29,8 @@ class Logger():
 class TexLogger(Logger):
     """A logger that focuses on output to tex files."""
     
-    def __init__(self, filename):
-        super().__init__(filename)
+    def __init__(self, directory, filename=None):
+        super().__init__(directory, filename)
         self.write(r'\documentclass[11pt,a4paper]{article}', 'w')
         self.write('\n')
         self.write_line(r'\usepackage[utf8]{inputenc}')
