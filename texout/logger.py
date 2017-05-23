@@ -40,7 +40,15 @@ class TexLogger(Logger):
         self.write_line(r'\usepackage{graphicx}')
         self.write_line(r'\usepackage{float}')
         self.write_line(r'\usepackage[left=1.00in, right=1.00in, top=1.00in, bottom=1.00in]{geometry}')
+        self.write_line(r'\setcounter{secnumdepth}{5}')
         self.write_line(r'\begin{document}')
+        self.write_line('\\noindent')
+        
+    def texline(self, msg):
+        """Write a tex line, that is a message followed by 
+        double slashes followed by double a new line."""
+        
+        self.write_line(msg + "\\\\")
         
     def close(self):
         """End the tex document."""
@@ -59,9 +67,18 @@ class TexLogger(Logger):
         
             sub (int):
                 The depth of the section.  Defaults to 0."""
-        
-        self.write_line('\{0}section{{{1}}}\n'.format('sub'*sub, title))
-        
+                
+        if sub < 3:
+            self.write_line('\{0}section{{{1}}}\n'.format('sub'*sub, title))
+        elif sub == 3:
+            self.write_line('\paragraph{{{0}}} \mbox{{}} \n'.format(title))
+            self.write_line('\\noindent')
+        elif sub == 4:
+            self.write_line('\subparagraph{{{0}}} \mbox{{}} \n'.format(title))
+            self.write_line('\\noindent')
+        else:
+            raise ValueError("TeX file cannot handle section levels greater than 5.")
+            
     def figure(self, image, caption, width=3.):
         """Add figure to the tex file.
         
