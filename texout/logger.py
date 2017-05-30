@@ -6,8 +6,8 @@ class Logger():
     """Basic object that outputs text to files."""
     
     def __init__(self, directory, filename=None):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        
+        self.mkdir(directory)
         if filename is None:
             filename = time.strftime('%m-%d--%H-%M-%S', time.localtime()) + '.tex'
         if directory.endswith('/'):
@@ -25,6 +25,17 @@ class Logger():
     def write_line(self, msg):
         self.write(msg)
         self.write('\n')
+        
+    def savefig(self, fig, figname):
+        plotdir = self.directory + 'images/'
+        self.mkdir(plotdir)
+        fig.tight_layout()
+        fig.savefig(plotdir+figname)
+    
+    @staticmethod
+    def mkdir(directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
             
 class TexLogger(Logger):
     """A logger that focuses on output to tex files."""
@@ -39,6 +50,7 @@ class TexLogger(Logger):
         self.write_line(r'\usepackage{amssymb}')
         self.write_line(r'\usepackage{graphicx}')
         self.write_line(r'\usepackage{float}')
+        self.write_line(r'\graphicspath{ {images/} }')
         self.write_line(r'\usepackage[left=1.00in, right=1.00in, top=1.00in, bottom=1.00in]{geometry}')
         self.write_line(r'\setcounter{secnumdepth}{5}')
         self.write_line(r'\begin{document}')
@@ -48,7 +60,7 @@ class TexLogger(Logger):
         """Write a tex line, that is a message followed by 
         double slashes followed by double a new line."""
         
-        self.write_line(msg + "\\\\")
+        self.write_line(msg + " \\\\")
         
     def close(self):
         """End the tex document."""
@@ -79,7 +91,7 @@ class TexLogger(Logger):
         else:
             raise ValueError("TeX file cannot handle section levels greater than 5.")
             
-    def figure(self, image, caption, width=3.):
+    def figure(self, fig, imagename, caption, width=3.):
         """Add figure to the tex file.
         
         Parameters:
@@ -97,9 +109,11 @@ class TexLogger(Logger):
         self.write('\n')
         self.write_line(r'\begin{figure}[H]')
         self.write_line(r'\centering')
-        self.write_line(r'\includegraphics[width={0}in]{{{1}}}'.format(width, image))
+        self.write_line(r'\includegraphics[width={0}in]{{{1}}}'.format(width, imagename))
         self.write_line(r'\caption{' + '{}'.format(caption) + '}')
         self.write_line(r'\end{figure}')
+        
+        self.savefig(fig, imagename)
         
 def texlog(filename):
     return TexLogger(filename)
