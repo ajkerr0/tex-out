@@ -1,6 +1,9 @@
 
+import csv
 import os
 import time
+
+import numpy as np
 
 class Logger():
     """Basic object that outputs text to files."""
@@ -114,6 +117,92 @@ class TexLogger(Logger):
         self.write_line(r'\end{figure}')
         
         self.savefig(fig, imagename)
+        
+class DataLogger:
+    """A logger that focuses on output to csv files."""
+    
+    def __init__(self, filename, cat):
+        self.filename = filename
+        try:
+            os.stat(filename).st_size
+        except FileNotFoundError:
+            self.write(cat)
+#            self.write(dtypes)
+   
+    def write(self, data):
+        with open(self.filename, 'a', newline='') as f:
+            line_writer = csv.writer(f, delimiter=',')
+            line_writer.writerow([datum for datum in data])
+        
+def data_read(filename, x, y, **constraints):
+    
+    # load entire data file
+    data = np.genfromtxt(filename, 
+                         dtype=None,
+                         delimiter=',',
+                         skip_header=0,
+                         names=True)
+    
+    # keep only the data points that meet constraints
+    indices = None
+    for constrained_var, constraint in constraints.items():
+        step_indices = np.where(data[constrained_var] == constraint)[0]
+        try:
+            indices = np.intersect1d(indices, step_indices)
+        except TypeError:
+            # if indices is None, make it step_indices
+            indices = step_indices
+    data = data[indices]
+    
+    # group data points based on remaining degrees of freedom
+    constraints[x] = ''
+    constraints[y] = ''
+    dofs = [x for x in data.dtype.names if x not in constraints]
+    
+    # determine shape of data
+    shape = []
+    dof_uniques = []
+    for dof in dofs:
+        uniques = np.unique(data[dof])
+        shape.append(len(uniques))
+        dof_uniques.append(uniques)
+        
+    # build nested lists with recursive algorithm
+    # credit this step to Abhijit on StackOverflow    
+    def build_list(shape):
+        if not shape:
+            return []
+        return [build_list(shape[1:]) for i in range(shape[0])]
+    xdata = build_list(shape)
+    ydata = build_list(shape)
+    
+    # populate grouped data
+    for datum in data:
+        innerx, innery = xdata, ydata
+        for dof, ulist in zip(dofs, dof_uniques):
+            index = np.where(ulist==datum[dof])[0][0]
+            innerx = innerx[index]
+            innery = innery[index]
+        innerx.append(datum[x])
+        innery.append(datum[y])
+    
+    # fill numpy arrays with averages and stds
+    xavgs, yavgs, xstds, ystds, vals = [],[],[],[],[]
+    for indices in np.ndindex(*shape):
+        innerx, innery = xdata, ydata
+        val = []
+        for count, index in enumerate(indices):
+            innerx = innerx[index]
+            innery = innery[index]
+            val.append(dof_uniques[count][index])
+        xavgs.append(np.average(innerx))
+        yavgs.append(np.average(innery))
+        xstds.append(np.std(innerx))
+        ystds.append(np.std(innery))
+        vals.append(val)
+        
+    return np.asarray(xavgs), np.asarray(yavgs), np.asarray(xstds), \
+           np.asarray(ystds), vals, dofs
         
 def texlog(filename):
     return TexLogger(filename)
