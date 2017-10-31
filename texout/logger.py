@@ -152,7 +152,10 @@ def data_read(filename, x, y, **constraints):
         except TypeError:
             # if indices is None, make it step_indices
             indices = step_indices
-    data = data[indices]
+    try:
+        data = data[indices]
+    except IndexError:
+        raise ValueError("No data meets the constraints")
     
     # group data points based on remaining degrees of freedom
     constraints[x] = ''
@@ -203,6 +206,28 @@ def data_read(filename, x, y, **constraints):
         
     return np.asarray(xavgs), np.asarray(yavgs), np.asarray(xstds), \
            np.asarray(ystds), vals, dofs
-        
+           
+def data_read_individual(filename, x, y, **constraints):
+    
+    # load entire data file
+    data = np.genfromtxt(filename, 
+                         dtype=None,
+                         delimiter=',',
+                         skip_header=0,
+                         names=True)
+    
+    # keep only the data points that meet constraints
+    indices = None
+    for constrained_var, constraint in constraints.items():
+        step_indices = np.where(data[constrained_var] == constraint)[0]
+        try:
+            indices = np.intersect1d(indices, step_indices)
+        except TypeError:
+            # if indices is None, make it step_indices
+            indices = step_indices
+    data = data[indices]
+    
+    return data[x], data[y]
+    
 def texlog(filename):
     return TexLogger(filename)
