@@ -146,16 +146,26 @@ def data_read(filename, x, y, **constraints):
     # keep only the data points that meet constraints
     indices = None
     for constrained_var, constraint in constraints.items():
+        
+        if constraint is None:
+            # we ignore this constraint and go to the next one
+#            continue
+            pass
+        
         step_indices = np.where(data[constrained_var] == constraint)[0]
         try:
             indices = np.intersect1d(indices, step_indices)
         except TypeError:
             # if indices is None, make it step_indices
             indices = step_indices
-    try:
-        data = data[indices]
-    except IndexError:
-        raise ValueError("No data meets the constraints")
+            
+    if indices is None:
+        pass
+    else:
+        try:
+            data = data[indices]
+        except IndexError:
+            raise ValueError("No data meets the constraints")
     
     # group data points based on remaining degrees of freedom
     constraints[x] = ''
